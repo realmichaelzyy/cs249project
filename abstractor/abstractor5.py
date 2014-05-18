@@ -47,7 +47,8 @@ def xml2df(files, fLen):
                 pass
      
         recurs(soup)
-        #print name_list
+        inFile.close()
+	#print name_list
         #print text_list
         #print attr_list # always null according to schema - http://www.nsf.gov/awardsearch/resources/Award.xsd
 
