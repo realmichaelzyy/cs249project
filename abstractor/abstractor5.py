@@ -1,4 +1,7 @@
 # Extracts NSF award data from all XML files in the current directory and appends them to a single dataframe which is then pickled to disk
+
+# Command line argument - 1 indicates the presence of a previously pickled dataframe on disk, 0 indicates its absence (for the first run)
+
 # Data sourced from - http://www.nsf.gov/awardsearch/download.jsp
 # Written by Utkarsh Jaiswal on May 18 2014
 
@@ -6,8 +9,9 @@ from bs4 import BeautifulSoup
 from numpy import hstack, matrix
 import pandas as pd
 import os
+from sys import argv, setrecursionlimit, getrecursionlimit
  
-def xml2df(files, fLen):
+def xml2df(files, fLen, picklePath):
     master_list = [[]]
     df = pd.DataFrame(columns=('html', 'body', 'roottag', 'award', 'awardtitle', 'awardeffectivedate', 'awardexpirationdate', 'awardamount',
     'awardinstrument', 'awardinstrument-value', 'organization', 'organization-code', 'organization-directorate', 'organization-directorate-longname', 'organization-division',
@@ -45,7 +49,7 @@ def xml2df(files, fLen):
     'programreference-7', 'programreference-code-7', 'programreference-text-7',
     'programreference-8', 'programreference-code-8', 'programreference-text-8',
     'programreference-9', 'programreference-code-9', 'programreference-text-9'))
-
+    
     fileIdx = 1
     for f in files:
         print "Processing", f, "- file", fileIdx, "of", fLen
@@ -191,11 +195,12 @@ def xml2df(files, fLen):
     master_list = master_list[1:]
     # Pickle dataframe to disk
     df = df.append(master_list, ignore_index=True)
-    df.to_pickle('df.pkl')
+    df.to_pickle(picklePath)
 
 if __name__ == "__main__":
+    setrecursionlimit(getrecursionlimit()*12)
     print "Reading XML files, this may take a while..."
     files = [f for f in os.listdir('.') if (os.path.isfile(f) and f.endswith('.xml'))] # produce a list of all XML files in the current directory
     print "Calculating total number of files..."
     fLen = len(files)
-    xml2df(files, fLen)
+    xml2df(files, fLen, str(argv[1]))
