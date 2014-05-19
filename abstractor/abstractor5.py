@@ -1,4 +1,4 @@
-# Extracts NSF award data from all XML files in the current directory and appends them to a single dataframe which is then written to a CSV file on disk
+# Extracts NSF award data from all XML files in the current directory and appends them to a single dataframe which is then pickled to disk
 # Data sourced from - http://www.nsf.gov/awardsearch/download.jsp
 # Written by Utkarsh Jaiswal on May 18 2014
 
@@ -8,7 +8,44 @@ import pandas as pd
 import os
  
 def xml2df(files, fLen):
-    df = pd.DataFrame()
+    master_list = [[]]
+    df = pd.DataFrame(columns=('html', 'body', 'roottag', 'award', 'awardtitle', 'awardeffectivedate', 'awardexpirationdate', 'awardamount',
+    'awardinstrument', 'awardinstrument-value', 'organization', 'organization-code', 'organization-directorate', 'organization-directorate-longname', 'organization-division',
+    'organization-division-longname', 'programofficer', 'programofficer-signblockname', 'abstractnarration', 'minamdletterdate', 'maxamdletterdate', 'arraamount', 'awardid',
+    'investigator-1', 'investigator-firstname-1', 'investigator-lastname-1', 'investigator-emailaddress-1', 'investigator-startdate-1', 'investigator-enddate-1', 'investigator-rolecode-1',
+    'investigator-2', 'investigator-firstname-2', 'investigator-lastname-2', 'investigator-emailaddress-2', 'investigator-startdate-2', 'investigator-enddate-2', 'investigator-rolecode-2',
+    'investigator-3', 'investigator-firstname-3', 'investigator-lastname-3', 'investigator-emailaddress-3', 'investigator-startdate-3', 'investigator-enddate-3', 'investigator-rolecode-3',
+    'investigator-4', 'investigator-firstname-4', 'investigator-lastname-4', 'investigator-emailaddress-4', 'investigator-startdate-4', 'investigator-enddate-4', 'investigator-rolecode-4',
+    'investigator-5', 'investigator-firstname-5', 'investigator-lastname-5', 'investigator-emailaddress-5', 'investigator-startdate-5', 'investigator-enddate-5', 'investigator-rolecode-5',
+    'institution-1', 'institution-name-1', 'institution-cityname-1', 'institution-zipcode-1', 'institution-phonenumber-1', 'institution-streetaddress-1', 'institution-countryname-1', 'institution-statename-1', 'institution-statecode-1',
+    'institution-2', 'institution-name-2', 'institution-cityname-2', 'institution-zipcode-2', 'institution-phonenumber-2', 'institution-streetaddress-2', 'institution-countryname-2', 'institution-statename-2', 'institution-statecode-2',
+    'institution-3', 'institution-name-3', 'institution-cityname-3', 'institution-zipcode-3', 'institution-phonenumber-3', 'institution-streetaddress-3', 'institution-countryname-3', 'institution-statename-3', 'institution-statecode-3',
+    'institution-4', 'institution-name-4', 'institution-cityname-4', 'institution-zipcode-4', 'institution-phonenumber-4', 'institution-streetaddress-4', 'institution-countryname-4', 'institution-statename-4', 'institution-statecode-4',
+    'institution-5', 'institution-name-5', 'institution-cityname-5', 'institution-zipcode-5', 'institution-phonenumber-5', 'institution-streetaddress-5', 'institution-countryname-5', 'institution-statename-5', 'institution-statecode-5',
+    'foainformation-1', 'foainformation-code-1', 'foainformation-name-1',
+    'foainformation-2', 'foainformation-code-2', 'foainformation-name-2',
+    'foainformation-3', 'foainformation-code-3', 'foainformation-name-3',
+    'foainformation-4', 'foainformation-code-4', 'foainformation-name-4',
+    'foainformation-5', 'foainformation-code-5', 'foainformation-name-5',
+    'programelement-1', 'programelement-code-1', 'programelement-text-1',
+    'programelement-2', 'programelement-code-2', 'programelement-text-2',
+    'programelement-3', 'programelement-code-3', 'programelement-text-3',
+    'programelement-4', 'programelement-code-4', 'programelement-text-4',
+    'programelement-5', 'programelement-code-5', 'programelement-text-5',
+    'programelement-6', 'programelement-code-6', 'programelement-text-6',
+    'programelement-7', 'programelement-code-7', 'programelement-text-7',
+    'programelement-8', 'programelement-code-8', 'programelement-text-8',
+    'programelement-9', 'programelement-code-9', 'programelement-text-9',
+    'programreference-1', 'programreference-code-1', 'programreference-text-1',
+    'programreference-2', 'programreference-code-2', 'programreference-text-2',
+    'programreference-3', 'programreference-code-3', 'programreference-text-3',
+    'programreference-4', 'programreference-code-4', 'programreference-text-4',
+    'programreference-5', 'programreference-code-5', 'programreference-text-5',
+    'programreference-6', 'programreference-code-6', 'programreference-text-6',
+    'programreference-7', 'programreference-code-7', 'programreference-text-7',
+    'programreference-8', 'programreference-code-8', 'programreference-text-8',
+    'programreference-9', 'programreference-code-9', 'programreference-text-9'))
+
     fileIdx = 1
     for f in files:
         print "Processing", f, "- file", fileIdx, "of", fLen
@@ -48,139 +85,113 @@ def xml2df(files, fLen):
      
         recurs(soup)
         inFile.close()
-	#print name_list
+        #print name_list
         #print text_list
         #print attr_list # always null according to schema - http://www.nsf.gov/awardsearch/resources/Award.xsd
 
         # For the following section, refer http://www.nsf.gov/awardsearch/resources/Award.xsd
         # Per the schema, investigator, institution, foainformation, programelement and programreference can occur an unbounded number of times (maxOccurs = "unbounded")
-        # We thus append suffixes to each such occurrence to avoid confusing pandas while appending to the existing dataframe
-        # We also append parent element names since beautifulsoup flattens the XML hierarchy
+        # Pad out each of these elements to the maximum number of instances allowed in our dataframe definition
 
-        # suffix indices to multiple instances of 'investigator'
-        if 'investigator' in name_list:
-            firstIdx = name_list.index('investigator')
-            if 'institution' in name_list:
-                lastIdx = name_list.index('institution')
-            elif 'foainformation' in name_list:
-                lastIdx = name_list.index('foainformation')
-            elif 'programelement' in name_list:
-                lastIdx = name_list.index('programelement')
-            elif 'programreference' in name_list:
-                lastIdx = name_list.index('programreference')
-            else:
-                lastIdx = len(name_list)
-            idx = 1
-            for i in range(firstIdx, lastIdx, 7):
-                name_list[i+1] = name_list[i] + '-' + name_list[i+1] + '-' + str(idx)
-                name_list[i+2] = name_list[i] + '-' + name_list[i+2] + '-' + str(idx)
-                name_list[i+3] = name_list[i] + '-' + name_list[i+3] + '-' + str(idx)
-                name_list[i+4] = name_list[i] + '-' + name_list[i+4] + '-' + str(idx)
-                name_list[i+5] = name_list[i] + '-' + name_list[i+5] + '-' + str(idx)
-                name_list[i+6] = name_list[i] + '-' + name_list[i+6] + '-' + str(idx)
-                name_list[i] = name_list[i] + '-' + str(idx)
-                idx += 1
+        indices = [i for i, x in enumerate(name_list) if x == "investigator"]
+        #print "investigator", indices
+        if 5 - len(indices) > 0 and len(indices) != 0: # padding required if number of investigators is less than the max allowed
+            firstIdx = indices[-1]
+            colCount = offset = 7 # each occurrence of investigator accounts for 7 columns (see dataframe above)
+            for i in range(5 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 7
+        elif 5 - len(indices) > 0: # what if there are zero instances of investigator?
+            firstIdx = name_list.index('awardid')
+            colCount = 7
+            offset = 1
+            for i in range(5 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 7
+        
+        indices = [i for i, x in enumerate(name_list) if x == "institution"]
+        #print "institution", indices
+        if 5 - len(indices) > 0 and len(indices) != 0: # padding required if number of institutions is less than the max allowed
+            firstIdx = indices[-1]
+            colCount = offset = 9 # each occurrence of institution accounts for 9 columns (see dataframe above)
+            for i in range(5 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 9
+        elif 5 - len(indices) > 0: # what if there are zero instances of institution?
+            firstIdx = name_list.index('awardid')
+            colCount = 9
+            offset = 36 # first insertion will occur at index(awardid) +35 (5x7 from padded 'investigator') +1
+            for i in range(5 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 9
 
-        # suffix indices to multiple instances of institution
-        if 'institution' in name_list:
-            firstIdx = name_list.index('institution')
-            if 'foainformation' in name_list:
-                lastIdx = name_list.index('foainformation')
-            elif 'programelement' in name_list:
-                lastIdx = name_list.index('programelement')
-            elif 'programreference' in name_list:
-                lastIdx = name_list.index('programreference')
-            else:
-                lastIdx = len(name_list)
-            idx = 1
-            for i in range(firstIdx, lastIdx, 9):
-                name_list[i+1] = name_list[i] + '-' + name_list[i+1] + '-' + str(idx)
-                name_list[i+2] = name_list[i] + '-' + name_list[i+2] + '-' + str(idx)
-                name_list[i+3] = name_list[i] + '-' + name_list[i+3] + '-' + str(idx)
-                name_list[i+4] = name_list[i] + '-' + name_list[i+4] + '-' + str(idx)
-                name_list[i+5] = name_list[i] + '-' + name_list[i+5] + '-' + str(idx)
-                name_list[i+6] = name_list[i] + '-' + name_list[i+6] + '-' + str(idx)
-                name_list[i+7] = name_list[i] + '-' + name_list[i+7] + '-' + str(idx)
-                name_list[i+8] = name_list[i] + '-' + name_list[i+8] + '-' + str(idx)
-                name_list[i] = name_list[i] + '-' + str(idx)
-                idx += 1
+        indices = [i for i, x in enumerate(name_list) if x == "foainformation"]
+        #print "foainformation", indices
+        if 5 - len(indices) > 0 and len(indices) != 0: # padding required if number of foainformations is less than the max allowed
+            firstIdx = indices[-1]
+            colCount = offset = 3 # each occurrence of foainformation accounts for 3 columns (see dataframe above)
+            for i in range(5 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 3
+        elif 5 - len(indices) > 0: # what if there are zero instances of foainformation?
+            firstIdx = name_list.index('awardid')
+            colCount = 3
+            offset = 81 # first insertion will occur at index(awardid) +35 (5x7 from padded 'investigator') +45 (5x9 from padded 'institution') +1
+            for i in range(5 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 3
 
-        # suffix indices to multiple instances of foainformation
-        if 'foainformation' in name_list:
-            firstIdx = name_list.index('foainformation')
-            if 'programelement' in name_list:
-                lastIdx = name_list.index('programelement')
-            elif 'programreference' in name_list:
-                lastIdx = name_list.index('programreference')
-            else:
-                lastIdx = len(name_list)
-            idx = 1
-            for i in range(firstIdx, lastIdx, 3):
-                name_list[i+1] = name_list[i] + '-' + name_list[i+1] + '-' + str(idx)
-                name_list[i+2] = name_list[i] + '-' + name_list[i+2] + '-' + str(idx)
-                name_list[i] = name_list[i] + '-' + str(idx)
-                idx += 1
+        indices = [i for i, x in enumerate(name_list) if x == "programelement"]
+        #print "programelement", indices
+        if 9 - len(indices) > 0 and len(indices) != 0: # padding required if number of programelements is less than the max allowed
+            firstIdx = indices[-1]
+            colCount = offset = 3 # each occurrence of programelement accounts for 3 columns (see dataframe above)
+            for i in range(9 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 3
+        elif 9 - len(indices) > 0: # what if there are zero instances of programelement?
+            firstIdx = name_list.index('awardid')
+            colCount = 3
+            offset = 96 # first insertion will occur at index(awardid) +35 (5x7 from padded 'investigator') +45 (5x9 'institution') +15 (5x3 'foainformation') +1
+            for i in range(9 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 3
 
-        # suffix indices to multiple instances of programelement
-        if 'programelement' in name_list:
-            firstIdx = name_list.index('programelement')
-            if 'programreference' in name_list:
-                lastIdx = name_list.index('programreference')
-            else:
-                lastIdx = len(name_list)
-            idx = 1
-            for i in range(firstIdx, lastIdx, 3):
-                name_list[i+1] = name_list[i] + '-' + name_list[i+1] + '-' + str(idx)
-                name_list[i+2] = name_list[i] + '-' + name_list[i+2] + '-' + str(idx)
-                name_list[i] = name_list[i] + '-' + str(idx)
-                idx += 1
-
-        # suffix indices to multiple instances of programreference
-        if 'programreference' in name_list:
-            firstIdx = name_list.index('programreference')
-            lastIdx = len(name_list)
-            idx = 1
-            for i in range(firstIdx, lastIdx, 3):
-                name_list[i+1] = name_list[i] + '-' + name_list[i+1] + '-' + str(idx)
-                name_list[i+2] = name_list[i] + '-' + name_list[i+2] + '-' + str(idx)
-                name_list[i] = name_list[i] + '-' + str(idx)
-                idx += 1
-
-        # The other elements appear only once and can be deduplicated without suffixing indices
-
-        if 'value' in name_list:
-            firstIdx = name_list.index('value')
-            name_list[firstIdx] = 'awardinstrument-value'
-
-        if 'code' in name_list:
-            firstIdx = name_list.index('code')
-            name_list[firstIdx] = 'organization-code'
-
-        if 'directorate' in name_list:
-            firstIdx = name_list.index('directorate')
-            name_list[firstIdx] = 'organization-directorate'
-
-        if 'longname' in name_list:
-            firstIdx = name_list.index('longname')
-            name_list[firstIdx] = 'organization-directorate-longname'
-
-        if 'division' in name_list:
-            firstIdx = name_list.index('division')
-            name_list[firstIdx] = 'organization-division'
-
-        if 'longname' in name_list:
-            firstIdx = name_list.index('longname')
-            name_list[firstIdx] = 'organization-division-longname'
-
-        if 'signblockname' in name_list:
-            firstIdx = name_list.index('signblockname')
-            name_list[firstIdx] = 'programofficer-signblockname'
-
-        s1 = pd.Series(text_list, index = name_list, name = f)
-        df = df.append(s1, ignore_index=True)
-
-    # Write dataframe to disk as CSV
-    df.to_csv('df.csv', sep=',', encoding='utf-8')
+        indices = [i for i, x in enumerate(name_list) if x == "programreference"]
+        #print "programreference", indices
+        if 9 - len(indices) > 0 and len(indices) != 0: # padding required if number of programreferences is less than the max allowed
+            firstIdx = indices[-1]
+            colCount = offset = 3 # each occurrence of programreference accounts for 3 columns (see dataframe above)
+            for i in range(9 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 3
+        elif 9 - len(indices) > 0: # what if there are zero instances of programreference?
+            firstIdx = name_list.index('awardid')
+            colCount = 3
+            offset = 123 # first insertion will occur at index(awardid) +35 (5x7 from padded 'investigator') +45 (5x9 'institution') +15 (5x3 'foainformation') +27 (9x3 'programelement') +1
+            for i in range(9 - len(indices)):
+                for j in range(colCount):
+                    text_list.insert(firstIdx+offset, None)
+                offset += 3
+    
+        #print "Length of name_list is", len(name_list), "and the length of text_list is", len(text_list)
+        #print name_list
+        #print text_list
+        master_list.append(text_list)
+        
+    master_list = master_list[1:]
+    # Pickle dataframe to disk
+    df = df.append(master_list, ignore_index=True)
+    df.to_pickle('df.pkl')
 
 if __name__ == "__main__":
     print "Reading XML files, this may take a while..."
