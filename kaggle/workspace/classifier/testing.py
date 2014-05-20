@@ -8,21 +8,48 @@ Created on Thu May 15 13:31:10 2014
 import matplotlib.pyplot as plt
 import pandas
 import numpy
+import datetime
 
 data_path = "./data/"
 
 data = pandas.io.parsers.read_csv(data_path + "unimelb_training.csv",low_memory=False)
 
-data.columns = map(lambda x: x.replace(".",""), data.columns)
+data.columns = map(lambda x: 'Astar' + x[3:] if x[0:3] == "A.." else x.replace(".",""), data.columns)
 
 # <codecell>
 
-plt.figure()
-ax = plt.subplot(1,1,1)
-ax.plot(range(1,10,1))
+#plt.figure()
+#ax = plt.subplot(1,1,1)
+#ax.plot(range(1,10,1))
 
 # see the number of uniques for each column
 data.apply(lambda x: x.nunique())
+
+#fill in values for contract value and WithPHD fields
+a = data.ContractValueBandseenoteA.fillna('Z')
+data.loc[:,'ContractValueBandseenoteA'] = a
+for i in range(1,14):
+    col = "WithPHD" + str(i)
+    a = data[col].fillna('No')
+    data.loc[:,col] = a
+    
+# fill in values for nonexistant publications    
+for i in range(1,14):
+    for j in ['Astar','A','B','C']:
+        col = j + str(i)
+        #print col
+        a = data[col].fillna(0)
+        data.loc[:,col] = a   
+for i in range(1,14):
+    for j in ['NumberofUnsuccessfulGrant','NumberofSuccessfulGrant','Astar','A','B','C']:
+        col = j + str(i)
+        #print col
+        a = data[col].fillna(0)
+        data.loc[:,col] = a    
+a = data.Startdate.apply(lambda x: datetime.datetime.strptime(x,'%d/%m/%y'))
+data.loc[:,'Startdate'] = a
+
+
 
 # See if there is any relationship between grant size and appliation status
 grouped = data.groupby('ContractValueBandseenoteA')
@@ -67,8 +94,53 @@ def maxValue(x):
         return 100000000
     else:
         return -1
-pandas.cut(data.ContractValueBandseenoteA.apply(maxValue),[0,10000,100000,100000001],labels=["small","med","large"])
+grouped = data.groupby(pandas.cut(data.ContractValueBandseenoteA.apply(maxValue),[0,100000,1000000,100000001],labels=["small","med","large"]))
+grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
 
 
+# Are there any sponsors that are particularly good indicators
+grouped = data.groupby('SponsorCode')
+result = grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
+result[(result['Total applications'] > 30) & ((result['Success Rate'] > 0.75) | (result['Success Rate'] < 0.25)) ]
 
+# Does having a PhD among the first 3 investigators help?
+grouped = data.groupby(data[['WithPHD1','WithPHD2','WithPHD3']].apply(lambda x: \
+x['WithPHD1'].strip() == 'Yes' or x['WithPHD2'].strip() == 'Yes' or x['WithPHD3'].strip() == 'Yes',axis=1))
+grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
 
+# Does having a PhD among the first 3 investigators help?
+grouped = data.groupby(data[['Astar1','A1','Astar2','A2','Astar3','A3']].apply(lambda x: \
+logical_or.reduce(x.apply(lambda y: y > 0)).Astar1,axis=1))
+grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
+
+# does month matter
+grouped = data.groupby(data.Startdate.apply(lambda x: x.month))
+grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
+
+grouped = data.groupby(data.Startdate.apply(lambda x: x.dayofweek))
+grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
+
+# Does having a PhD among the first 3 investigators help?
+cols = []
+for i in range(1,3):
+    for col in ['WithPHD']:
+        cols.append(col + str(i))
+grouped = data.groupby(data[cols].apply(lambda x: numpy.logical_or.reduce(\
+x.apply(lambda y: y.strip() == 'Yes'))[0],axis=1))
+grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
+
+def successful(x, pubThresh, grantThresh):
+    pubcols = []
+    pubcols += [col for col in x.index if ((col.startswith('A') or col.startswith('B') or col.startswith('C'))\
+    and len(col) < 7 and '14' not in col and '15' not in col)]
+    #pubcols += [col for col in x.index if col.startswith('B')]
+    #pubcols += [col for col in x.index if col.startswith('C') and len(col) < 6]
+    successfulGrantsCols = []
+    successfulGrantsCols += [col for col in x.index if 'NumberofSuccess' in col and '14' not in col and '15' not in col]
+    unsuccessfulGrantsCols = []
+    unsuccessfulGrantsCols += [col for col in x.index if 'NumberofUnsuccess' in col and '14' not in col and '15' not in col]
+    return(numpy.add.reduce(x[pubcols])[0] >= pubThresh and numpy.add.reduce(x[successfulGrantsCols])[0] >= grantThresh)
+    #return(numpy.add.reduce(x[pubcols])[0] > pubThresh )
+    
+grouped = data.groupby(data.apply(successful,axis=1,args=[1,1]))
+grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
