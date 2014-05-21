@@ -11,7 +11,7 @@ for year in {1976..2014}
 do
 	unzip $year.zip > /dev/null
 	echo 'Invoking abstractor for year' $year
-	fname='df-'$year'.pkl'
-	python abstractor5.py $fname 
+	fname='df-'$year'.msg'
+	python abstractor5.py $fname >> invokelog.txt
 	rm *.xml > /dev/null
 done
