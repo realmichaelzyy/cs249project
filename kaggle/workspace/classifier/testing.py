@@ -144,3 +144,46 @@ def successful(x, pubThresh, grantThresh):
     
 grouped = data.groupby(data.apply(successful,axis=1,args=[1,1]))
 grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
+
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+encoded = le.fit_transform(data.ContractValueBandseenoteA)
+data['ContractValueBandseenoteA_enc'] = encoded
+
+encoded = le.fit_transform(data.GrantCategoryCode)
+data['GrantCategoryCode_enc'] = encoded
+
+encoded = le.fit_transform(data.SponsorCode)
+data['SponsorCode_enc'] = encoded
+
+data['DayofMonth'] = data.Startdate.apply(lambda x: x.month)
+data['DayofWeek'] = data.Startdate.apply(lambda x: x.dayofweek)
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.cross_validation import cross_val_score
+
+cross_val_score(dt,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc']].values,data['GrantStatus'].values,cv=10)
+
+# Add in NoGrants
+cols = []
+for i in range(1,4):
+    for col in ['NumberofUnsuccessfulGrant']:
+        cols.append(col + str(i))
+data['NoGrants'] = data[cols].apply(lambda x: numpy.logical_and.reduce(x.apply(lambda y: y == 0))[0],axis=1)
+encoded = le.fit_transform(data.NoGrants)
+data['NoGrants_enc'] = encoded
+
+mean(cross_val_score(dt,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc','DayofMonth','DayofWeek','NoGrants_enc']].values,data['GrantStatus'].values,cv=10))
+
+from sklearn.ensemble import RandomForestClassifier
+clf = RandomForestClassifier(n_estimators=10)
+mean(cross_val_score(clf,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc','DayofMonth','DayofWeek','NoGrants_enc']].values,data['GrantStatus'].values,cv=10))
+
+from sklearn.ensemble import ExtraTreesClassifier
+clf = ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=1, random_state=0)
+mean(cross_val_score(clf,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc','DayofMonth','DayofWeek','NoGrants_enc']].values,data['GrantStatus'].values,cv=10))
+
+encoded = le.fit_transform(data.Role1)
+data['Role1_enc'] = encoded
+
+# See if last day of the month matters ??
