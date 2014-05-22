@@ -52,7 +52,7 @@ def xml2df(files, fLen, picklePath):
     
     fileIdx = 1
     for f in files:
-        print "Processing", f, "- file", fileIdx, "of", fLen
+        #print "Processing", f, "- file", fileIdx, "of", fLen
         fileIdx += 1
         inFile = open(f, 'r')
         soup = BeautifulSoup(inFile)
@@ -195,12 +195,13 @@ def xml2df(files, fLen, picklePath):
     master_list = master_list[1:]
     # Pickle dataframe to disk
     df = df.append(master_list, ignore_index=True)
-    df.to_pickle(picklePath)
+    #df.to_pickle(picklePath)
+    df.to_msgpack(picklePath) # highly space efficient, also experimental (requires pandas 0.13 or later). Read with pd.read_msgpack('picklePath')
 
 if __name__ == "__main__":
     setrecursionlimit(getrecursionlimit()*12)
-    print "Reading XML files, this may take a while..."
+    #print "Reading XML files, this may take a while..."
     files = [f for f in os.listdir('.') if (os.path.isfile(f) and f.endswith('.xml'))] # produce a list of all XML files in the current directory
-    print "Calculating total number of files..."
+    #print "Calculating total number of files..."
     fLen = len(files)
     xml2df(files, fLen, str(argv[1]))
