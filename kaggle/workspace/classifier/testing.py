@@ -187,3 +187,17 @@ encoded = le.fit_transform(data.Role1)
 data['Role1_enc'] = encoded
 
 # See if last day of the month matters ??
+
+# Test if Binarizing it helps
+from sklearn.preprocessing import LabelBinarizer
+lb = LabelBinarizer()
+lb.fit_transform(data['SponsorCode_enc'].values)
+sponsorCodeBDF = pandas.DataFrame(lb.fit_transform(data['SponsorCode_enc'].values),columns = lb.classes_)
+newData = pandas.concat([data, sponsorCodeBDF], axis=1)
+
+newData.iloc[:,newData.columns.get_loc('0'):]
+mean(cross_val_score(clf,newData[['SponsorCode_enc']].values,data['GrantStatus'].values,cv=20))
+mean(cross_val_score(clf,newData.iloc[:,newData.columns.get_loc('0'):].values,data['GrantStatus'].values,cv=20))
+
+
+
