@@ -156,8 +156,9 @@ data['GrantCategoryCode_enc'] = encoded
 encoded = le.fit_transform(data.SponsorCode)
 data['SponsorCode_enc'] = encoded
 
-data['DayofMonth'] = data.Startdate.apply(lambda x: x.month)
+data['Month'] = data.Startdate.apply(lambda x: x.month)
 data['DayofWeek'] = data.Startdate.apply(lambda x: x.dayofweek)
+data['DayofMonth'] = data.Startdate.apply(lambda x: x.day)
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import cross_val_score
