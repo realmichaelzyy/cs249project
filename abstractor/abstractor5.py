@@ -50,6 +50,8 @@ def xml2df(files, fLen, picklePath):
     'programreference-8', 'programreference-code-8', 'programreference-text-8',
     'programreference-9', 'programreference-code-9', 'programreference-text-9'))
     
+    errorLog = open('errorLog.txt', 'a')
+
     fileIdx = 1
     for f in files:
         #print "Processing", f, "- file", fileIdx, "of", fLen
@@ -188,14 +190,15 @@ def xml2df(files, fLen, picklePath):
                 offset += 3
     
         #print "Length of name_list is", len(name_list), "and the length of text_list is", len(text_list)
-        #print name_list
-        #print text_list
-        master_list.append(text_list)
+        if len(text_list) != 172: # something's wrong, most likely a case of ProgramElement containing Code but not Text
+            errorLog.write(picklePath + ' ' + f + '\n') # write the name of the troublesome XML file to the error log along with the .msg that contains it
+        else:
+            master_list.append(text_list) # all good, append to master_list
         
+    errorLog.close()
     master_list = master_list[1:]
-    # Pickle dataframe to disk
     df = df.append(master_list, ignore_index=True)
-    #df.to_pickle(picklePath)
+    #print df.columns.values.tolist()
     df.to_msgpack(picklePath) # highly space efficient, also experimental (requires pandas 0.13 or later). Read with pd.read_msgpack('picklePath')
 
 if __name__ == "__main__":
