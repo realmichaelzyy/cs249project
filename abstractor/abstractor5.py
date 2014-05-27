@@ -197,8 +197,8 @@ def xml2df(files, fLen, picklePath):
         
     errorLog.close()
     master_list = master_list[1:]
-    df = df.append(master_list, ignore_index=True)
-    #print df.columns.values.tolist()
+    for i in range(len(master_list)):
+        df.loc[i] = master_list[i]
     df.to_msgpack(picklePath) # highly space efficient, also experimental (requires pandas 0.13 or later). Read with pd.read_msgpack('picklePath')
 
 if __name__ == "__main__":

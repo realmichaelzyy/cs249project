@@ -6,6 +6,7 @@
 
 rm -f *.xml
 rm -f *.msg 
+rm -f errorLog.txt
 
 for year in {1976..2014}
 do
