@@ -26,25 +26,32 @@ data.columns = map(lambda x: 'Astar' + x[3:] if x[0:3] == "A.." else x.replace("
 data.apply(lambda x: x.nunique())
 
 #fill in values for contract value and WithPHD fields
-a = data.ContractValueBandseenoteA.fillna('Z')
+a = data.ContractValueBandseenoteA.fillna('-1')
 data.loc[:,'ContractValueBandseenoteA'] = a
+a = data.GrantCategoryCode.fillna('-1')
+data.loc[:,'GrantCategoryCode'] = a
+a = data.SponsorCode.fillna('-1')
+data.loc[:,'SponsorCode'] = a
+
 for i in range(1,14):
     col = "WithPHD" + str(i)
     a = data[col].fillna('No')
     data.loc[:,col] = a
     
 # fill in values for nonexistant publications    
+"""
 for i in range(1,14):
     for j in ['Astar','A','B','C']:
         col = j + str(i)
         #print col
         a = data[col].fillna(0)
-        data.loc[:,col] = a   
+        data.loc[:,col] = a 
+"""
 for i in range(1,14):
     for j in ['NumberofUnsuccessfulGrant','NumberofSuccessfulGrant','Astar','A','B','C']:
         col = j + str(i)
         #print col
-        a = data[col].fillna(0)
+        a = data[col].fillna(-1)
         data.loc[:,col] = a    
 a = data.Startdate.apply(lambda x: datetime.datetime.strptime(x,'%d/%m/%y'))
 data.loc[:,'Startdate'] = a
@@ -61,17 +68,18 @@ grouped = data.groupby('GrantCategoryCode')
 grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
 
 # research area and grant status
-def broadRFCD(x):
+# research area and grant status
+def broadRFCD(x, digits):
     if pandas.isnull(x):
         return -1
-    return int(x/10000)
+    return int(x/(pow(10,floor(log10(x))+1-digits)))
     
-data['RFCDCode1'].apply(lambda x: broadRFCD(x)).nunique()
+data['RFCDCode1'].apply(lambda x: broadRFCD(x,2)).nunique()
 
-grouped = data.groupby(data['RFCDCode1'].apply(lambda x: broadRFCD(x)))
+grouped = data.groupby(data['RFCDCode1'].apply(lambda x: broadRFCD(x,2)))
 grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
 
-grouped = data.groupby([data['RFCDCode1'].apply(lambda x: broadRFCD(x)),data['ContractValueBandseenoteA']])
+grouped = data.groupby([data['RFCDCode1'].apply(lambda x: broadRFCD(x,2)),data['ContractValueBandseenoteA']])
 grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
 
 # does how focused the application is matter? (one area versus many)
@@ -79,11 +87,11 @@ grouped = data.groupby(data.RFCDPercentage1.apply(lambda x: x >= 80))
 grouped['GrantStatus'].agg({'Total applications': len, 'Success Rate': mean})
 
 def maxValue(x):
-    if(pandas.isnull(x)):
+    if(pandas.isnull(x) or x == '-1'):
         return -1
     x = x.strip()
     if(len(x) > 1):
-        print "what? " + x + "length: " + len(x)
+        print "what? " + str(x) + "length: " + str(len(x))
     if(x == "A"):
         return 50000
     elif(ord(x)-ord("A") < 6):
@@ -163,7 +171,7 @@ data['DayofMonth'] = data.Startdate.apply(lambda x: x.day)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import cross_val_score
 
-cross_val_score(dt,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc']].values,data['GrantStatus'].values,cv=10)
+#cross_val_score(dt,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc']].values,data['GrantStatus'].values,cv=10)
 
 # Add in NoGrants
 cols = []
@@ -174,7 +182,7 @@ data['NoGrants'] = data[cols].apply(lambda x: numpy.logical_and.reduce(x.apply(l
 encoded = le.fit_transform(data.NoGrants)
 data['NoGrants_enc'] = encoded
 
-mean(cross_val_score(dt,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc','DayofMonth','DayofWeek','NoGrants_enc']].values,data['GrantStatus'].values,cv=10))
+#mean(cross_val_score(dt,data[['ContractValueBandseenoteA_enc','GrantCategoryCode_enc','SponsorCode_enc','DayofMonth','DayofWeek','NoGrants_enc']].values,data['GrantStatus'].values,cv=10))
 
 from sklearn.ensemble import RandomForestClassifier
 clf = RandomForestClassifier(n_estimators=10)
@@ -193,7 +201,7 @@ data['Role1_enc'] = encoded
 from sklearn.preprocessing import LabelBinarizer
 lb = LabelBinarizer()
 lb.fit_transform(data['SponsorCode_enc'].values)
-sponsorCodeBDF = pandas.DataFrame(lb.fit_transform(data['SponsorCode_enc'].values),columns = lb.classes_)
+sponsorCodeBDF = pandas.DataFrame(lb.fit_transform(data['SponsorCode_enc'].values),columns = map(str,lb.classes_))
 newData = pandas.concat([data, sponsorCodeBDF], axis=1)
 
 newData.iloc[:,newData.columns.get_loc('0'):]
