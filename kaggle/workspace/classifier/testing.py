@@ -26,16 +26,23 @@ data.columns = map(lambda x: 'Astar' + x[3:] if x[0:3] == "A.." else x.replace("
 data.apply(lambda x: x.nunique())
 
 #fill in values for contract value and WithPHD fields
+#fill in values for contract value and WithPHD fields
 a = data.ContractValueBandseenoteA.fillna('-1')
+data.loc[:,'ContractValueBandseenoteA_withnull'] = data.loc[:,'ContractValueBandseenoteA']
 data.loc[:,'ContractValueBandseenoteA'] = a
+
 a = data.GrantCategoryCode.fillna('-1')
+data.loc[:,'GrantCategoryCode_withnull'] = data.loc[:,'GrantCategoryCode']
 data.loc[:,'GrantCategoryCode'] = a
+
 a = data.SponsorCode.fillna('-1')
+data.loc[:,'SponsorCode_withnull'] = data.loc[:,'SponsorCode']
 data.loc[:,'SponsorCode'] = a
 
 for i in range(1,14):
     col = "WithPHD" + str(i)
     a = data[col].fillna('No')
+    data.loc[:,col+"_withnull"] = data.loc[:,col]
     data.loc[:,col] = a
     
 # fill in values for nonexistant publications    
@@ -52,7 +59,9 @@ for i in range(1,14):
         col = j + str(i)
         #print col
         a = data[col].fillna(-1)
+        data.loc[:,col + "_withnull"] = data.loc[:,col]
         data.loc[:,col] = a    
+        
 a = data.Startdate.apply(lambda x: datetime.datetime.strptime(x,'%d/%m/%y'))
 data.loc[:,'Startdate'] = a
 
