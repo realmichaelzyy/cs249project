@@ -62,6 +62,7 @@ def xml2df(files, fLen, picklePath):
         name_list=[]
         text_list=[]
         attr_list=[]
+        pair_list=[]
      
         def recurs(soup):
             try:
@@ -69,19 +70,21 @@ def xml2df(files, fLen, picklePath):
                     try:
                         #print j.name
                         if j.name!=None:
+                            #print 'appending j.name'
                             name_list.append(j.name)
                     except:
                         pass
                     try:
                         #print j.text
                         if j.name!=None:
-                            #print j.string
+                            #print 'appending j.string', j.string
                             text_list.append(j.string)
                     except:
                         pass
                     try:
                         #print j.attrs
                         if j.name!=None:
+                            #print 'appending attr'
                             attr_list.append(j.attrs)
                     except:
                         pass
@@ -91,22 +94,19 @@ def xml2df(files, fLen, picklePath):
      
         recurs(soup)
         inFile.close()
-        #print name_list
-        #print text_list
-        #print attr_list # always null according to schema - http://www.nsf.gov/awardsearch/resources/Award.xsd
-
+        
         # For the following section, refer http://www.nsf.gov/awardsearch/resources/Award.xsd
         # Per the schema, investigator, institution, foainformation, programelement and programreference can occur an unbounded number of times (maxOccurs = "unbounded")
         # Pad out each of these elements to the maximum number of instances allowed in our dataframe definition
 
         indices = [i for i, x in enumerate(name_list) if x == "investigator"]
-        #print "investigator", indices
         if 5 - len(indices) > 0 and len(indices) != 0: # padding required if number of investigators is less than the max allowed
             firstIdx = indices[-1]
             colCount = offset = 7 # each occurrence of investigator accounts for 7 columns (see dataframe above)
             for i in range(5 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 7
         elif 5 - len(indices) > 0: # what if there are zero instances of investigator?
             firstIdx = name_list.index('awardid')
@@ -115,16 +115,17 @@ def xml2df(files, fLen, picklePath):
             for i in range(5 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 7
-        
+
         indices = [i for i, x in enumerate(name_list) if x == "institution"]
-        #print "institution", indices
         if 5 - len(indices) > 0 and len(indices) != 0: # padding required if number of institutions is less than the max allowed
             firstIdx = indices[-1]
             colCount = offset = 9 # each occurrence of institution accounts for 9 columns (see dataframe above)
             for i in range(5 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 9
         elif 5 - len(indices) > 0: # what if there are zero instances of institution?
             firstIdx = name_list.index('awardid')
@@ -133,16 +134,17 @@ def xml2df(files, fLen, picklePath):
             for i in range(5 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 9
 
         indices = [i for i, x in enumerate(name_list) if x == "foainformation"]
-        #print "foainformation", indices
         if 5 - len(indices) > 0 and len(indices) != 0: # padding required if number of foainformations is less than the max allowed
             firstIdx = indices[-1]
             colCount = offset = 3 # each occurrence of foainformation accounts for 3 columns (see dataframe above)
             for i in range(5 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 3
         elif 5 - len(indices) > 0: # what if there are zero instances of foainformation?
             firstIdx = name_list.index('awardid')
@@ -151,16 +153,17 @@ def xml2df(files, fLen, picklePath):
             for i in range(5 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 3
 
         indices = [i for i, x in enumerate(name_list) if x == "programelement"]
-        #print "programelement", indices
         if 9 - len(indices) > 0 and len(indices) != 0: # padding required if number of programelements is less than the max allowed
             firstIdx = indices[-1]
             colCount = offset = 3 # each occurrence of programelement accounts for 3 columns (see dataframe above)
             for i in range(9 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 3
         elif 9 - len(indices) > 0: # what if there are zero instances of programelement?
             firstIdx = name_list.index('awardid')
@@ -169,16 +172,17 @@ def xml2df(files, fLen, picklePath):
             for i in range(9 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 3
 
         indices = [i for i, x in enumerate(name_list) if x == "programreference"]
-        #print "programreference", indices
         if 9 - len(indices) > 0 and len(indices) != 0: # padding required if number of programreferences is less than the max allowed
             firstIdx = indices[-1]
             colCount = offset = 3 # each occurrence of programreference accounts for 3 columns (see dataframe above)
             for i in range(9 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 3
         elif 9 - len(indices) > 0: # what if there are zero instances of programreference?
             firstIdx = name_list.index('awardid')
@@ -187,9 +191,9 @@ def xml2df(files, fLen, picklePath):
             for i in range(9 - len(indices)):
                 for j in range(colCount):
                     text_list.insert(firstIdx+offset, None)
+                    name_list.insert(firstIdx+offset, None)
                 offset += 3
-    
-        #print "Length of name_list is", len(name_list), "and the length of text_list is", len(text_list)
+
         if len(text_list) != 172: # something's wrong, most likely a case of ProgramElement containing Code but not Text
             errorLog.write(picklePath + ' ' + f + '\n') # write the name of the troublesome XML file to the error log along with the .msg that contains it
         else:
